@@ -1,18 +1,22 @@
 import CategoryService from "@/Services/CategoryService";
 import { Component } from "react";
 import axios from 'axios';
-import { useNavigate } from "react-router-dom";
-import Swal from 'sweetalert2';
+import { useNavigate, useParams } from "react-router-dom";
 
 export const withNavigation = (Component) => {
     return props => <Component {...props} navigate={useNavigate()} />;
 }
 
-class PostsCreate extends Component {
+export const withParams = (Component) => {
+    return props => <Component {...props} params={useParams()} />;
+}
+
+class PostsEdit extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
+            id: '',
             title: '',
             content: '',
             category_id: '',
@@ -25,10 +29,19 @@ class PostsCreate extends Component {
         this.handleTitleChange = this.handleTitleChange.bind(this);
         this.handleContentChange = this.handleContentChange.bind(this);
         this.handleCategoryChange = this.handleCategoryChange.bind(this);
-        this.handleThumbnailChange = this.handleThumbnailChange.bind(this);
+
         this.handleSubmit = this.handleSubmit.bind(this);
     }
     componentDidMount() {
+        this.setState(
+            {
+                isLoading: true,
+            });
+        axios.get('api/posts/' + this.props.params.id).then(response => {
+            this.setState({title: response.data.data.title});
+            this.setState({content: response.data.data.content});
+            this.setState({category_id: response.data.data.category.id});
+        }).finally(()=>this.setState({isLoading: false}))
         CategoryService.getAll().then(response => this.setState({ categories: response.data.data }))
 
     }
@@ -45,10 +58,6 @@ class PostsCreate extends Component {
         this.setState({ category_id: event.target.value });
     }
 
-    handleThumbnailChange(event) {
-        this.setState({ thumbnail: event.target.files[0] });
-    }
-
     handleSubmit(event) {
         event.preventDefault();
         if (this.state.isLoading) return;
@@ -61,20 +70,14 @@ class PostsCreate extends Component {
         let postData = new FormData()
         postData.append('title', this.state.title);
         postData.append('content', this.state.content);
-        postData.append('category_id', this.state.category_id);
-        axios.post('/api/posts', postData).then(response => {
-            Swal.fire({
-                icon: 'success',
-                title: 'Post added successfully'
-            })
-            this.props.navigate('/')})
-            .catch(error => {
-                this.setState({errors: error.response.data.errors})
-                Swal.fire({
-                    icon: 'error',
-                    title: error.response.data.message
-                })
-            })
+        postData.append('content', this.state.category_id);
+
+        axios.put('/api/posts' + this.state.id, {
+            title: this.state.title,
+            content: this.state.content,
+            category_id: this.state.category_id,
+        }).then(response => this.props.navigate('/'))
+            .catch(error => this.setState({errors: error.response.data.errors}))
             .finally(() => this.setState({isLoading: false}));
 
     }
@@ -129,16 +132,7 @@ class PostsCreate extends Component {
                         {this.errorMessage('category_id')}
 
                 </div>
-                <div className="mt-4">
-                    <label htmlFor="thumbnail" className="block font-medium text-sm text-gray-700">
-                        Thumbnail
-                    </label>
-                    <input type="file" id="thumbnail" onChange={this.handleThumbnailChange} />
 
-
-                    {this.errorMessage('thumbnail')}
-
-                </div>
                 <div className="mt-4">
                     <button type="submit" className="flex items-center px-3 py-2 bg-blue-600 text-white rounded" disabled={this.state.isLoading}>
                         <svg role="status" className={`w-4 h-4 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600 inline ${!this.state.isLoading ? 'hidden' : ''}`} viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -153,4 +147,4 @@ class PostsCreate extends Component {
     }
 }
 
-export default withNavigation(PostsCreate);
+export default withParams(withNavigation(PostsEdit));

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePostRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Http\Request;
@@ -43,9 +44,15 @@ class PostController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StorePostRequest $request)
     {
         //
+        $post = Post::create($request->validated());
+
+        if ($request->hasFile('thumbnail')){
+            $filename =  $request->file('thumbnail')->getClientOriginalName();
+        }
+        return new PostResource($post);
     }
 
     /**
@@ -54,9 +61,10 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Post $post)
     {
         //
+        return new PostResource($post);
     }
 
     /**
@@ -66,9 +74,12 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(StorePostRequest $request, Post $post)
     {
         //
+        $post->update($request->validated());
+
+        return new PostResource($post);
     }
 
     /**

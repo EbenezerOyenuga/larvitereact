@@ -2,6 +2,7 @@ import React from 'react';
 import { Component } from 'react';
 import axios from 'axios';
 import CategoryService from '@/Services/CategoryService';
+import { Link } from 'react-router-dom';
 
 class PostsIndex extends Component {
 
@@ -34,7 +35,6 @@ class PostsIndex extends Component {
     componentDidMount() {
         this.fetchPosts()
         CategoryService.getAll().then(response => this.setState({ categories: response.data.data }))
-
     }
 
     renderPosts() {
@@ -46,6 +46,7 @@ class PostsIndex extends Component {
                     <td>{post.category.name}</td>
                     <td>{post.content}</td>
                     <td>{post.created_at}</td>
+                    <td><Link to={`posts/edit/${post.id}`}>Edit</Link></td>
                 </tr>
         );
     }
