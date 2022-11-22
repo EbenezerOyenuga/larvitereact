@@ -37,11 +37,12 @@ class PostsEdit extends Component {
             {
                 isLoading: true,
             });
-        axios.get('api/posts/' + this.props.params.id).then(response => {
-            this.setState({title: response.data.data.title});
-            this.setState({content: response.data.data.content});
-            this.setState({category_id: response.data.data.category.id});
-        }).finally(()=>this.setState({isLoading: false}))
+        axios.get('/api/posts/' + this.props.params.id).then(response => {
+            this.setState({ id: response.data.data.id });
+            this.setState({ title: response.data.data.title });
+            this.setState({ content: response.data.data.content });
+            this.setState({ category_id: response.data.data.category.id });
+        }).finally(() => this.setState({ isLoading: false }))
         CategoryService.getAll().then(response => this.setState({ categories: response.data.data }))
 
     }
@@ -67,26 +68,21 @@ class PostsEdit extends Component {
             isLoading: true
         });
 
-        let postData = new FormData()
-        postData.append('title', this.state.title);
-        postData.append('content', this.state.content);
-        postData.append('content', this.state.category_id);
-
-        axios.put('/api/posts' + this.state.id, {
+        axios.put('/api/posts/' + this.state.id, {
             title: this.state.title,
             content: this.state.content,
-            category_id: this.state.category_id,
+            category_id: this.state.category_id
         }).then(response => this.props.navigate('/'))
-            .catch(error => this.setState({errors: error.response.data.errors}))
-            .finally(() => this.setState({isLoading: false}));
+            .catch(error => this.setState({ errors: error.response.data.errors }))
+            .finally(() => this.setState({ isLoading: false }));
 
     }
 
-    errorMessage(field){
-        return(
+    errorMessage(field) {
+        return (
             <div className="text-red-600 mt-1">
                 {
-                    this.state.errors?.[field]?.map((message, index) =>{
+                    this.state.errors?.[field]?.map((message, index) => {
                         return (
                             <div>{message}</div>
                         )
@@ -106,7 +102,7 @@ class PostsEdit extends Component {
                     </label>
                     <input value={this.state.title} onChange={this.handleTitleChange} id="title" type="text" className="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" />
 
-                        { this.errorMessage('title') }
+                    {this.errorMessage('title')}
 
                 </div>
                 <div className="mt-4">
@@ -115,7 +111,7 @@ class PostsEdit extends Component {
                     </label>
                     <textarea value={this.state.content} onChange={this.handleContentChange} id="content" type="text" className="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" />
 
-                        {this.errorMessage('content')}
+                    {this.errorMessage('content')}
 
                 </div>
                 <div className="mt-4">
@@ -129,7 +125,7 @@ class PostsEdit extends Component {
                         ))}
                     </select>
 
-                        {this.errorMessage('category_id')}
+                    {this.errorMessage('category_id')}
 
                 </div>
 

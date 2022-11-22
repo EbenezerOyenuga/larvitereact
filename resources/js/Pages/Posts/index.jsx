@@ -299,6 +299,11 @@ class PostsIndex extends Component {
                                         <span>Created at</span>
                                     </div>
                                 </th>
+                                <th>
+                                    <div>
+                                        <span></span>
+                                    </div>
+                                </th>
                             </tr>
                             {this.renderFiltersRow()}
                         </thead>

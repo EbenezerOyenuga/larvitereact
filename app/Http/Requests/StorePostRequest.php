@@ -25,16 +25,16 @@ class StorePostRequest extends FormRequest
     {
         return [
             //
-            'title'=> 'required',
+            'title' => 'required',
             'content' => 'required',
             'category_id' => 'required',
-            'thumbnail' => 'nullable|image'
+
         ];
     }
 
     public function attributes()
     {
-        return[
+        return [
             'category_id' => 'category'
         ];
     }

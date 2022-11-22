@@ -33,9 +33,9 @@ class PostController extends Controller
         $filterableValues = array_filter($request->only($filterable));
 
         $posts = Post::with('category')
-            ->when(count($filterableValues), function($query) use ($filterableValues){
-                foreach ($filterableValues as $column => $value){
-                $query->where($column, 'like', '%' . $value . '%');
+            ->when(count($filterableValues), function ($query) use ($filterableValues) {
+                foreach ($filterableValues as $column => $value) {
+                    $query->where($column, 'like', '%' . $value . '%');
                 }
             })
 
@@ -59,9 +59,7 @@ class PostController extends Controller
         //
         $post = Post::create($request->validated());
 
-        if ($request->hasFile('thumbnail')){
-            $filename =  $request->file('thumbnail')->getClientOriginalName();
-        }
+
         return new PostResource($post);
     }
 
