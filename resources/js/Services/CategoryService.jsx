@@ -1,6 +1,6 @@
 class CategoryService {
     getAll() {
-        return axios.get('api/categories');
+        return axios.get('/api/categories');
     }
 }
 

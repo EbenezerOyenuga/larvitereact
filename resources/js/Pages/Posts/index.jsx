@@ -3,6 +3,7 @@ import { Component } from 'react';
 import axios from 'axios';
 import CategoryService from '@/Services/CategoryService';
 import { Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 class PostsIndex extends Component {
 
@@ -14,16 +15,24 @@ class PostsIndex extends Component {
             categories: [],
             query: {
                 page: 1,
+                id: '',
+                content: '',
                 category_id: '',
                 order_column: 'id',
                 order_direction: 'desc'
             }
         }
 
-        this.categoryChanged = this.categoryChanged.bind(this);
+        this.handleCategoryFilter = this.handleCategoryFilter.bind(this);
+        this.handleIdFilter = this.handleIdFilter.bind(this);
+        this.handleTitleFilter = this.handleTitleFilter.bind(this);
+        this.handleContentFilter = this.handleContentFilter.bind(this);
         this.pageChanged = this.pageChanged.bind(this);
         this.orderChanged = this.orderChanged.bind(this);
+        this.deletePost = this.deletePost.bind(this);
     }
+
+
 
     fetchPosts(page = 1) {
         axios.get('api/posts', { params: this.state.query })
@@ -37,6 +46,28 @@ class PostsIndex extends Component {
         CategoryService.getAll().then(response => this.setState({ categories: response.data.data }))
     }
 
+    deletePost(event) {
+        Swal.fire({
+            title: 'Delete this post?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes',
+            confirmButtonColor: '#EF4444',
+            cancelButtonText: 'No',
+            cancelButtonColor: '#A3A3A3',
+            reverseButtons: true,
+            focusCancel: true
+        }).then(result => {
+            if (result.isConfirmed) {
+                axios.delete('/api/posts/' + event.target.value)
+                    .then(response => this.fetchPosts())
+                    .catch(error => Swal.fire({ icon: 'error', title: 'Something went wrong' }));
+            }
+        })
+
+
+    }
+
     renderPosts() {
         return this.state.posts.data.map(
             post =>
@@ -46,7 +77,10 @@ class PostsIndex extends Component {
                     <td>{post.category.name}</td>
                     <td>{post.content}</td>
                     <td>{post.created_at}</td>
-                    <td><Link to={`posts/edit/${post.id}`}>Edit</Link></td>
+                    <td>
+                        <Link to={`posts/edit/${post.id}`}>Edit</Link>
+                        <button value={post.id} onClick={this.deletePost()} className='bg-red-500 rounded-full text-white px-3 py-1 font-bold'>Delete</button>
+                    </td>
                 </tr>
         );
     }
@@ -64,7 +98,7 @@ class PostsIndex extends Component {
 
     }
 
-    categoryChanged(category_id) {
+    handleCategoryFilter(event) {
 
         this.setState((
             {
@@ -74,8 +108,42 @@ class PostsIndex extends Component {
                 }
             }
         ), () => this.fetchPosts());
+    }
 
+    handleIdFilter(event) {
 
+        this.setState((
+            {
+                query: {
+                    id: event.target.value,
+                    page: 1
+                }
+            }
+        ), () => this.fetchPosts());
+    }
+
+    handleTitleFilter(event) {
+
+        this.setState((
+            {
+                query: {
+                    title: event.target.value,
+                    page: 1
+                }
+            }
+        ), () => this.fetchPosts());
+    }
+
+    handleContentFilter(event) {
+
+        this.setState((
+            {
+                query: {
+                    content: event.target.value,
+                    page: 1
+                }
+            }
+        ), () => this.fetchPosts());
     }
 
     renderPaginator() {
@@ -112,24 +180,12 @@ class PostsIndex extends Component {
         );
     }
 
-    renderCategoryFilter() {
-        const categories = this.state.categories.map(category =>
-            < option key={category.id} value={category.id} > {category.name}</option >
-        );
 
-        return (
-            <select onChange={this.categoryChanged}
-                className="mt-1 w-full sm:mt-0 sm:w-1/4 rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                <option>-- all categories --</option>
-                {categories}
-            </select>
-        )
-    }
 
     orderColumnIcon(column) {
         let icon = 'fa-sort';
         if (this.state.query.order_column === column) {
-            if (this.state.query.order_column === 'asc') {
+            if (this.state.query.order_direction === 'asc') {
                 icon = 'fa-sort-up';
             } else {
                 icon = 'fa-sort-down'
@@ -159,7 +215,48 @@ class PostsIndex extends Component {
         ), () => this.fetchPosts())
     }
 
+    renderTextFilter(column, callback) {
+        return (
+            <div className="m-2">
+                <input type="text" onChange={callback} value={this.state.query[column]} className="block" />
+            </div>
+        )
+    }
 
+    renderCategoryFilter() {
+        const categories = this.state.categories.map(category =>
+            < option key={category.id} value={category.id} > {category.name}</option >
+        );
+
+        return (
+            <div className="m-2">
+                <select onChange={this.handleCategoryFilter}
+                    className="mt-1 w-full sm:mt-0 rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                    <option>-- all categories --</option>
+                    {categories}
+                </select>
+            </div>
+        )
+    }
+
+    renderFiltersRow() {
+        return (
+            <tr className="bg-gray-50">
+                <th>
+                    {this.renderTextFilter('id', this.handleIdFilter)}
+                </th>
+                <th>
+                    {this.renderTextFilter('title', this.handleTitleFilter)}
+                </th>
+                <th>
+                    {this.renderCategoryFilter()}
+                </th>
+                <th>
+                    {this.renderTextFilter('content', this.handleContentFilter)}
+                </th>
+            </tr>
+        )
+    }
 
     render() {
         if (!('data' in this.state.posts)) return;
@@ -167,9 +264,7 @@ class PostsIndex extends Component {
         return (
             <div className="overflow-hidden overflow-x-auto p-6 bg-white border-gray-200">
                 <div className="min-w-full align-middle">
-                    <div className='mb-4'>
-                        {this.renderCategoryFilter()}
-                    </div>
+
                     <table className="table">
                         <thead className="table-header">
                             <tr>
@@ -205,6 +300,7 @@ class PostsIndex extends Component {
                                     </div>
                                 </th>
                             </tr>
+                            {this.renderFiltersRow()}
                         </thead>
                         <tbody className="table-body">
                             {this.renderPosts()}

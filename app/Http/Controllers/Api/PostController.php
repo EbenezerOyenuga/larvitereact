@@ -29,10 +29,20 @@ class PostController extends Controller
             $orderDirection = 'desc';
         }
 
+        $filterable = ['id', 'title', 'content'];
+        $filterableValues = array_filter($request->only($filterable));
+
         $posts = Post::with('category')
+            ->when(count($filterableValues), function($query) use ($filterableValues){
+                foreach ($filterableValues as $column => $value){
+                $query->where($column, 'like', '%' . $value . '%');
+                }
+            })
+
             ->when($request->filled('category_id'), function ($query) use ($request) {
                 $query->where('category_id', $request->category_id);
             })
+
             ->orderBy($orderColumn, $orderDirection)
             ->paginate(10);
         return PostResource::collection($posts);
@@ -88,8 +98,9 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Post $post)
     {
         //
+        $post->delete();
     }
 }
