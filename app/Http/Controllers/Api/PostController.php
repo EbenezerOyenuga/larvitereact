@@ -18,6 +18,7 @@ class PostController extends Controller
     public function index(Request $request)
     {
         //
+        $this->authorize('post_view');
         $orderColumn = $request->input('order_column', 'id');
         $orderDirection = $request->input('order_direction', 'desc');
 
@@ -38,7 +39,16 @@ class PostController extends Controller
                     $query->where($column, 'like', '%' . $value . '%');
                 }
             })
+            ->when($request->filled('global'), function ($query) use ($filterable, $request) {
 
+                foreach ($filterable as $column) {
+                    if ($column == $filterable[0]) {
+                        $query->where($column, 'like', '%' . $request->global . '%');
+                    } else {
+                        $query->orWhere($column, 'like', '%' . $request->global . '%');
+                    }
+                }
+            })
             ->when($request->filled('category_id'), function ($query) use ($request) {
                 $query->where('category_id', $request->category_id);
             })
@@ -57,6 +67,7 @@ class PostController extends Controller
     public function store(StorePostRequest $request)
     {
         //
+        $this->authorize('post_create');
         $post = Post::create($request->validated());
 
 
@@ -85,6 +96,7 @@ class PostController extends Controller
     public function update(StorePostRequest $request, Post $post)
     {
         //
+        $this->authorize('post_update');
         $post->update($request->validated());
 
         return new PostResource($post);
@@ -99,6 +111,9 @@ class PostController extends Controller
     public function destroy(Post $post)
     {
         //
+        $this->authorize('post_delete');
         $post->delete();
+
+        return response()->noContent();
     }
 }

@@ -4,6 +4,8 @@ import axios from 'axios';
 import CategoryService from '@/Services/CategoryService';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import _ from 'lodash';
+import { Can } from '../../Abilities/Can';
 
 class PostsIndex extends Component {
 
@@ -18,6 +20,8 @@ class PostsIndex extends Component {
                 id: '',
                 content: '',
                 category_id: '',
+                title: '',
+                global: '',
                 order_column: 'id',
                 order_direction: 'desc'
             }
@@ -27,6 +31,7 @@ class PostsIndex extends Component {
         this.handleIdFilter = this.handleIdFilter.bind(this);
         this.handleTitleFilter = this.handleTitleFilter.bind(this);
         this.handleContentFilter = this.handleContentFilter.bind(this);
+        this.handleGlobalFilter = this.handleGlobalFilter.bind(this);
         this.pageChanged = this.pageChanged.bind(this);
         this.orderChanged = this.orderChanged.bind(this);
         this.deletePost = this.deletePost.bind(this);
@@ -34,8 +39,9 @@ class PostsIndex extends Component {
 
 
 
-    fetchPosts(page = 1) {
-        axios.get('api/posts', { params: this.state.query })
+
+    fetchPosts() {
+        axios.get('/api/posts', { params: this.state.query })
             .then(response => this.setState({ posts: response.data }))
     }
 
@@ -47,6 +53,7 @@ class PostsIndex extends Component {
     }
 
     deletePost(event) {
+
         Swal.fire({
             title: 'Delete this post?',
             icon: 'warning',
@@ -65,7 +72,6 @@ class PostsIndex extends Component {
             }
         })
 
-
     }
 
     renderPosts() {
@@ -79,7 +85,9 @@ class PostsIndex extends Component {
                     <td>{post.created_at}</td>
                     <td>
                         <Link to={`posts/edit/${post.id}`}>Edit</Link>
-                        <button value={post.id} onClick={this.deletePost()} className='bg-red-500 rounded-full text-white px-3 py-1 font-bold'>Delete</button>
+                        <Can do="post_delete">
+                            <button type="button" value={post.id} onClick={this.deletePost} className="bg-red-500 rounded-full text-white px-3 py-1 font-bold">Delete</button>
+                        </Can>
                     </td>
                 </tr>
         );
@@ -98,6 +106,8 @@ class PostsIndex extends Component {
 
     }
 
+    debounceFetchPosts = _.debounce(this.fetchPosts, 500);
+
     handleCategoryFilter(event) {
 
         this.setState((
@@ -107,7 +117,9 @@ class PostsIndex extends Component {
                     page: 1
                 }
             }
-        ), () => this.fetchPosts());
+        ));
+
+        this.debounceFetchPosts();
     }
 
     handleIdFilter(event) {
@@ -119,7 +131,9 @@ class PostsIndex extends Component {
                     page: 1
                 }
             }
-        ), () => this.fetchPosts());
+        ));
+
+        this.debounceFetchPosts();
     }
 
     handleTitleFilter(event) {
@@ -131,7 +145,9 @@ class PostsIndex extends Component {
                     page: 1
                 }
             }
-        ), () => this.fetchPosts());
+        ));
+
+        this.debounceFetchPosts();
     }
 
     handleContentFilter(event) {
@@ -143,7 +159,23 @@ class PostsIndex extends Component {
                     page: 1
                 }
             }
-        ), () => this.fetchPosts());
+        ));
+
+        this.debounceFetchPosts();
+    }
+
+    handleGlobalFilter(event) {
+
+        this.setState((
+            {
+                query: {
+                    global: event.target.value,
+                    page: 1
+                }
+            }
+        ));
+
+        this.debounceFetchPosts();
     }
 
     renderPaginator() {
@@ -218,7 +250,7 @@ class PostsIndex extends Component {
     renderTextFilter(column, callback) {
         return (
             <div className="m-2">
-                <input type="text" onChange={callback} value={this.state.query[column]} className="block" />
+                <input type="text" placeholder='Search...' onChange={callback} value={this.state.query[column]} className="block" />
             </div>
         )
     }
@@ -264,8 +296,11 @@ class PostsIndex extends Component {
         return (
             <div className="overflow-hidden overflow-x-auto p-6 bg-white border-gray-200">
                 <div className="min-w-full align-middle">
-
+                    <div className='mb-4'>
+                        {this.renderTextFilter('global', this.handleGlobalFilter)}
+                    </div>
                     <table className="table">
+
                         <thead className="table-header">
                             <tr>
                                 <th>
